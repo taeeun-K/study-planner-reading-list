@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./style.css">
+  <title>STUDY PLANNER</title>
+
+  <!-- firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-database-compat.js"></script>
+</head>
+
+<body>
+
+  <style>
+
+    @font-face {
+    font-family: 'SchoolSafetyOcarina';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2511-1@1.0/HakgyoansimOcarinaR.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'GangwonEducationSaeum';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEduSaeeum_OTFMediumA.woff') format('woff');
+    font-weight: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'GangwonEducationModuche';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFLightA.woff') format('woff');
+    font-weight: 300;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'GangwonEducationModuche';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEdu_OTFBoldA.woff') format('woff');
+    font-weight: 700;
+    font-display: swap;
+}
+
+    *{margin: 0; padding: 0;}
+    ul,li{list-style: none;}
+    button{cursor: pointer;}
+
+    body{background-color: rgb(255, 248, 237); font-family: 'GangwonEducationSaeum';}
+    #wrap     {padding: 50px 40px; min-width: 320px; margin: 0 auto; width: 100%; max-width: 1440px; box-sizing: border-box; }
+    header    {margin-bottom: 50px; width: 100%; text-align: center; }
+    header h1.logo    {width: 100%; text-align: center;}
+    header h1.logo a  {text-decoration: none; color: plum; font-size: 30px; font-weight: 700; letter-spacing: 1.5px; font-family: 'SchoolSafetyOcarina'; }
+    header button.allDelete   {display: block; margin-left: auto; margin-top: 20px; padding: 5px 8px; font-size: 12px; font-weight: 500; color: #000; background-color: #fff;letter-spacing: 1px; border: 2px solid #ff7b00; border-radius: 6px;  font-family:'GangwonEducationSaeum';}
+    
+    
+    ul.tabBox {display:flex; margin-top: 10px; width:100%; justify-content: center; align-items: center; gap: 5px;}
+    ul.tabBox li{width: 100%; text-align: center;}
+    ul.tabBox li a{display: block; height: 40px; line-height: 40px; background: #222; color: #fff; text-decoration: none;}
+
+    
+    /* 독서리스트 (표) */
+    section     {width: 100%;}
+
+    .bookInput   {margin: 0 auto; padding: 10px; display: block; width: 100%; display: flex; flex-flow: row nowrap; justify-content: space-between; gap: 8px; box-sizing: border-box;  border: 1px solid #000; border-radius: 4px;}
+    .bookInput select#kids    {padding: 2px; width: 50px; height: 30px; line-height: 30px; font-size: 12px; box-sizing: border-box; border: 1px solid #eee; outline: none;font-family: 'GangwonEducationModuche';}
+    .bookInput .bookTitle    { padding-left: 5px; flex:1; height: 28px; font-size: 16px; line-height: 30px; border: 1px solid #ddd; font-family:'GangwonEducationSaeum';}
+    .bookInput .bookTitle:focus{outline: none;}
+    .bookInput .bookTitle::placeholder{font-family:'GangwonEducationSaeum';}
+    .bookInput .addBtn         { width: 32px; height: 32px; border: none; font-size: 18px; color: #000; background-color: #fff; border-radius: 50%; cursor: pointer; border: 1px solid #ddd;}
+    .bookInput .addBtn span:last-child     {transform: translate(-50%,-50%) rotate(-90deg);}
+    /* ************************************table */
+    .listCont   {margin-top: 30px ; width: 100%;}
+    .listCont .user_box   { width: 100%;}
+    .listCont .user_box table, th, td     {border-collapse: collapse; border: 1px solid #000;}
+    .listCont .user_box table.list_box     {width: 100%; table-layout: fixed; box-sizing: border-box;}
+    .listCont .user_box table.list_box:last-child{border-bottom: none;}
+    .listCont .user_box.yul table.list_box{margin-bottom: 10px;}
+    
+    /* 책정보 */
+    .listCont .user_box table.list_box tr.list      {width: 100%; display: table-row !important;}
+    .listCont .user_box table.list_box tr.list:first-child{}
+    .listCont .user_box table.list_box tr.list:last-child{}
+    .listCont .user_box table.list_box tr.list td   {font-size: 18px; font-weight: 100; text-align: center; display: table-cell !important;}
+    .listCont .user_box table.list_box tr.list td:first-child{}
+    
+    /* 진행중 리스트 */
+    .listCont .user_box table.list_box tr.list td:nth-child(3)   {padding-left: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left;}
+    
+    .listCont .user_box.yul tr.list td:nth-child(1)   {color: rgb(24, 197, 68);}
+    .listCont .user_box.hun tr.list td:nth-child(1)   {color: rgb(43, 152, 248);}
+    
+    .listCont .user_box td button{margin:4px 0 0 1px; width: 14px; height: 14px;}
+    .listCont .user_box td button.delBtn{margin:4px 0 0 1px; width: 14px; height: 14px; background: none; border: none;}
+    .listCont .user_box td input{margin:6px 0 0 1px; width: 14px; height: 14px;}
+    .listCont .user_box td input.readCheck{outline: none; border: 1px solid #222; border-radius: 2px; cursor: pointer;}
+    
+    /* 리스트 완료 체크박스 style */
+    .listCont .user_box tr.list.end td input.readCheck:checked {display: none;}
+    .listCont .user_box tr.list.end td input.readCheck:checked + label {display: inline-block; position: relative; cursor: pointer; height: 16px; line-height: 16px; vertical-align: middle;}
+    .listCont .user_box tr.list.end td input.readCheck:checked + label::after { content: "✔"; position: absolute; left: -6px; top: 3px; display: block; width: 14px; height: 14px; color: #000; font-size: 13px; line-height: 14px;}
+    /* 완료 리스트 */
+    .listCont .user_box tr.list.end    {background: #22222232;}
+    .listCont .user_box tr.list.end td:nth-child(3)   {padding-left: 5px; text-align: left;}
+    .listCont .user_box tr.list.end td:nth-child(4)   {color: #000;}  /* endDate */
+    .listCont .user_box tr.list.end td:nth-child(6)   {border-right: none;}
+    
+    @media (max-width: 480px){
+      #wrap{padding: 10.4167vw 8.3333vw;}
+      header{margin-bottom: 10.4167vw;}
+      header h1.logo a{font-size: 20px;}
+      header button.allDelete   {margin-top: 4.1667vw; padding:1.0417vw  1.6667vw; font-size: 3.3333vw;}
+      .bookInput{padding: 2.0833vw; gap: 1.6667vw;}
+      .bookInput select#kids{height: 5.8333vw; line-height: 5.8333vw; font-size: 3.3333vw; }
+      .bookInput .bookTitle{padding-left: 1.0417vw; height: 5.8333vw; line-height: 5.8333vw; font-size: 3.3333vw;}
+      .bookInput .addBtn{width: 6.6667vw; height: 6.6667vw;font-size: 3.3333vw;}
+      .listCont{margin-top: 6.2500vw;}
+      .listCont .user_box table.list_box tr.list td   {font-size: 4.3333vw;}
+    }
+    </style>
+
+<div id="wrap">
+  <header>
+    <h1 class="logo">
+      <a href="#">★STUDY PLANNER★</a>
+    </h1>
+    <button type="button" class="allDelete">전체삭제</button>
+  </header>
+  
+  <section>
+    <div class="bookInput save">
+        <select name="kids" id="kids" class="kidsName">
+          <option value="yul">율이</option>
+          <option value="hun">훈이</option>
+        </select>
+        <input type="text" name="" class="bookTitle" placeholder="책 제목">
+        <button type="button" class="addBtn">+</button>
+      </div>
+
+      <ul class="tabBox">
+        <li id="kid_y"><a href="#">도율</a></li>
+        <li id="kid_h"><a href="#">도훈</a></li>
+      </ul>
+
+      <!-- listCont Start flex -->
+      <div class="listCont">
+        <!-- 도율 -->
+        <div class="user_box yul">
+          <table class="list_box">
+            <colgroup>
+              <col width="10%">
+              <col width="10%">
+              <col width="50%">
+              <col width="10%">
+              <col width="10%">
+              <col width="10%">
+            </colgroup>
+            <tbody>
+
+            </tbody>
+          </table>
+        </div>
+  
+        <!-- 도훈 -->
+        <div class="user_box hun">
+          <table class="list_box" >
+            <colgroup>
+              <col width="10%">
+              <col width="10%">
+              <col width="50%">
+              <col width="10%">
+              <col width="10%">
+              <col width="10%">
+            </colgroup>
+            <tbody>
+
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+
+
+
+<script>
+  //firebase 초기화스크립트
+  const firebaseConfig = {
+    apiKey: "AIzaSyAG66ruck5RL61oRH88j0MDxcXJStQOWTs",
+    authDomain: "te-k-bdf16.firebaseapp.com",
+    projectId: "te-k-bdf16",
+    storageBucket: "te-k-bdf16.appspot.com",
+    messagingSenderId: "1071053752106",
+    appId: "1:1071053752106:web:e810d04678306505ac4053",
+    measurementId: "G-R644S9TJPZ"
+  };
+
+  // 초기화
+  firebase.initializeApp(firebaseConfig);
+
+  // 전역에서 쓸 db 객체
+  var db = firebase.database();
+</script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      // tab 클릭 시 table 모두 열기/닫기 토글
+      const tabBox = document.querySelectorAll('ul.tabBox li');
+      const userBox = document.querySelectorAll('.listCont .user_box');
+      tabBox.forEach((tab, idx) => {
+        tab.addEventListener('click', function(e){
+          e.preventDefault();
+          // 기존: 모두 닫고 해당 idx만 열기
+          // 수정: 해당 idx의 userBox만 토글, 나머지는 상태 유지
+          if(userBox[idx].style.display === 'block') {
+            userBox[idx].style.display = 'none';
+          } else {
+            userBox[idx].style.display = 'block';
+          }
+        });
+      });
+      // 초기엔 모두 닫기
+      userBox.forEach(box => box.style.display = 'none');
+    });
+  </script>
+  <!-- 수정 -->
+  <script>
+    
+  var list1 = {  //리스트1
+    addBtn : document.querySelector('.addBtn'),
+    name : document.getElementById('kids'),
+    book : document.querySelector('.bookTitle'),
+    listWrap : document.querySelector('.listCont'),
+    listBox : {
+      yul : document.querySelector('.user_box.yul .list_box tbody'),
+      hun : document.querySelector('.user_box.hun .list_box tbody')
+    },
+    bookInput : document.querySelector('.bookInput'),
+    allDelete : document.querySelector('.allDelete'),
+    clearBtn : document.querySelector('input.readCheck'),
+    book1Arr : {},  //스토리지 배열1
+    save : function(idx){ //저장
+      var name = this.name.value  //이름
+      var book = this.book.value  //책제목
+
+      var startDate = new Date();  //생성시점
+      var sDateTxt = (startDate.getMonth() + 1)  + '/' + startDate.getDate()  //생성시점
+
+      var endDate = new Date(); //완료시점
+      var eDateTxt = (endDate.getMonth() + 1)  + '/' + endDate.getDate()
+      
+      var target = document.getElementById('kids');  //타겟변수 = select option값 가져오기
+      
+        
+      if(book.length <= 0){ //입력값 없을때 생성x
+        return false;
+      }
+
+      var son = target.value;
+
+      //절대지우면 안됨   반드시 필요함.
+      if (!this.book1Arr[son]) this.book1Arr[son] = [];
+
+
+      if(idx){
+        this.book1Arr[son][idx] = {
+          name : name,
+          book : book,
+          startDate : sDateTxt
+        };
+      }else{
+        this.book1Arr[son].push({
+          name : name,
+          book : book,
+          startDate : sDateTxt
+        });
+      }
+      this.setStorage();
+      list1.write(son)
+    },
+    write : function(son){ //생성 리스트...
+      var txt = "";
+      if(!this.book1Arr) this.book1Arr = {}
+      if(!this.book1Arr[son]) this.book1Arr[son] = []
+      this.book1Arr[son].forEach((o,i) => {
+        var name = o.name=='yul'? '도율':'도훈'
+        var end = o.endDate ? o.endDate :''
+        var listClass = ''
+        var iptCheck = ''
+
+        if(end) {
+        listClass = 'end'
+        iptCheck = 'checked' //checked상태 부여
+        }
+
+        var inputNum = son+i;
+        txt += `
+          <tr class="list  ${listClass}" data-idx ='${i}'>
+            <td class="book user">${name}</td>
+            <td class="book startDate">${o.startDate}</td>
+            <td class="book book">${o.book}</td>
+            <td class="book endDate">${end}</td>
+            <td class="book listCheck">
+              <input type="checkbox" id ="${inputNum}" class="readCheck" ${iptCheck}/> 
+              <label for="${inputNum}"></label>
+            </td>
+            <td>
+              <button class="delBtn">X</button>
+            </td>
+          </tr>
+        `
+      })
+      this.listBox[son].innerHTML = txt;
+
+      this.book.value = "";
+      this.bookInput.classList.add('save');
+
+
+    },
+    delete : function(btn){
+      var li = btn.closest('.list');
+      var sonchk = btn.closest('.user_box').classList.contains('yul');
+      var idx = li.dataset.idx;
+      var son = 'yul';
+
+      if(!sonchk) son = 'hun'
+
+      list1.book1Arr[son].splice(idx,1);
+      this.setStorage();
+      list1.write('yul')
+      list1.write('hun')
+    },
+    checked : function(btn){ //선택
+      var li = btn.closest('.list');
+      var sonchk = btn.closest('.user_box').classList.contains('yul');
+      var son = 'yul';
+
+      if(!sonchk) son = 'hun'
+
+      var idx = li.dataset.idx;
+
+      console.log(idx)
+
+
+      // btn.remove();
+
+      var startDate = new Date();  //생성시점
+      var sDateTxt = (startDate.getMonth() + 1)  + '/' + startDate.getDate()
+
+      
+      if(btn.checked){
+        list1.book1Arr[son][idx].endDate = sDateTxt
+      }else{
+        list1.book1Arr[son][idx].endDate = ''
+      }
+
+      this.setStorage();
+      list1.write('yul')
+      list1.write('hun')
+    },
+    event : function(btn){ //이벤트
+      this.addBtn.addEventListener('click', function(){  //추가
+        list1.save()
+      })
+      this.book.addEventListener('keyup', function(e){  //엔터추가
+        if(e.keyCode == 13){ list1.save() }
+      })
+      this.allDelete.addEventListener('click', () => {  //전체삭제
+        this.book1Arr = {};
+        this.setStorage();
+        this.write('yul');
+        this.write('hun');
+      })
+      this.listWrap.addEventListener('click', function(e){
+        if(e.target.nodeName){
+          var btn = e.target;
+          if(btn.classList.contains('delBtn')){
+            list1.delete(btn)
+          }else if(btn.classList.contains('readCheck')){
+            list1.checked(btn)
+          }
+        }
+
+      })
+    },
+    setStorage : function(){
+      db.ref("studyList").set(this.book1Arr);
+    },
+    getStorage : function(){
+      db.ref("studyList").once("value", snapshot => {
+        this.book1Arr = snapshot.val() || {};
+        this.write('yul');
+        this.write('hun');
+      });
+    },
+    init : function(){
+      this.getStorage();
+      this.event();
+
+      //실시간 업데이트
+      db.ref("studyList").on('value', snapshot => {
+        this.book1Arr = snapshot.val() || {};
+        this.write('yul');
+        this.write('hun');
+      });
+    }
+  }
+
+  list1.init();
+</script>
+</body>
+</html>
